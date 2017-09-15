@@ -1,0 +1,27 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+@using (Html.BeginForm("GeneratePDF", "Home", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <div class="container">
+        <div class="form-horizontal" style="padding-top:20px">
+            <div class="form-group">
+                <div class="col-md-4">File Name</div>
+                <div class="col-md-8"><input type="text" class="form-control" name="fileName" /></div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-4">Title</div>
+                <div class="col-md-8"><input type="text" class="form-control" name="title" /></div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-4">Paragraph</div>
+                <div class="col-md-8"><textarea name="paragraph" class="form-control"></textarea></div>
+            </div>
+            <div class="form-group">
+                <div class="col-md-12"><input type="submit" value="Download PDF" class="btn btn-primary" /></div>
+            </div>
+        </div>
+    </div>
+}
