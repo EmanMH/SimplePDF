@@ -6,18 +6,50 @@ using System.Web.Mvc;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using System.IO;
+using SimplePDF.Services;
+using System.Threading.Tasks;
 
 namespace SimplePDF.Controllers
 {
     public class HomeController : Controller
     {
+        EmailService sv;
+
+        public HomeController()
+        {
+            sv = new EmailService();
+        }
+
         public ActionResult Index()
         {
             return View();
         }
 
         [HttpPost]
-        public void GeneratePDF(string fileName,string title,string paragraph)
+        public async Task<ActionResult> ProcessMethod(string fileName, string title, string paragraph, string email,string download,string send)
+        {
+            if (!string.IsNullOrEmpty(download))
+                DownloadPDF(fileName, title, paragraph);
+            else
+               await SendEmail(fileName, title, paragraph, email);
+
+            return View("Index");
+        }
+
+        private async Task SendEmail(string fileName, string title, string paragraph, string email)
+        {
+            EmailService sv = new EmailService();
+            sv.FileName = fileName;
+            sv.FromEmail = "support@simplepdf.com";
+            sv.FromName = "Simple PDF";
+            sv.Message = "<p>Thank you for using Simple PDF application!</p>";
+            sv.Subject = "Your generated PDF file";
+            sv.ToEmail = email;
+            sv.FileStream = CreatePDFStream(fileName, title, paragraph);
+            await sv.sendEmailAsync();
+        }
+
+        private byte[] CreatePDFStream(string fileName, string title, string paragraph)
         {
             Document document = new Document(PageSize.A4, 10, 10, 10, 10);
             var filestream = new MemoryStream();
@@ -25,7 +57,7 @@ namespace SimplePDF.Controllers
 
             document.Open();
 
-            iTextSharp.text.Font fn = FontFactory.GetFont("Verdana", 11, Font.BOLD);
+            iTextSharp.text.Font fn = FontFactory.GetFont("Verdana", 11,Font.BOLD);
             iTextSharp.text.Font fn2 = FontFactory.GetFont("Verdana", 8);
 
             Chunk titleChunk = new Chunk(title, fn);
@@ -59,12 +91,19 @@ namespace SimplePDF.Controllers
 
             document.Add(pdfTable);
             document.Close();
+            return filestream.ToArray();
+        }
+
+
+        private void DownloadPDF(string fileName,string title,string paragraph)
+        {
+            var fileStream = CreatePDFStream(fileName, title, paragraph);
 
             Response.Clear();
             Response.ContentType = "application/pdf";
             Response.AddHeader("content-disposition", "attachment;filename=" + fileName + ".pdf");
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
-            Response.BinaryWrite(filestream.ToArray());
+            Response.BinaryWrite(fileStream);
             Response.End();
 
         }
